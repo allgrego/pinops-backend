@@ -1,13 +1,15 @@
 from typing import Union
+import os
 
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 from app.routers import clients, international_agents, carriers, ops_files
 from app.database import create_db_and_tables
 from contextlib import asynccontextmanager
 
-
 import logging
+
 log = logging.getLogger(__name__)
 
 
@@ -38,6 +40,17 @@ app = FastAPI(title='OPS - API',
               lifespan=lifespan,
               redoc_url=None, version="1.0.0", 
               swagger_ui_parameters={"docExpansion": "none"})
+
+# CORS config
+CORS_ALLOWED_ORIGIN = os.environ.get("ALLOWED_CORS_ORIGINS") # Must be comma-separated. e.g. "http://localhost:3000,https://localhost:3000"
+CORS_origins= CORS_ALLOWED_ORIGIN.split(",")
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=CORS_origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # @app.middleware("http")
 # async def middleware(request: Request, call_next):

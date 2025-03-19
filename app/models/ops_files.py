@@ -2,11 +2,12 @@ from sqlmodel import SQLModel, Field, Relationship
 from app.models.clients import Client, ClientPublic
 from app.models.carriers import Carrier, CarrierPublic
 from app.models.international_agents import InternationalAgent, InternationalAgentPublic
+from app.models.ops_files_int_agents import OpsFileInternationalAgentLink
 from uuid import UUID, uuid4
-from typing import Optional, List
+from typing import Optional, List, Literal
 from datetime import datetime, date
 
-SCHEMA_NAME = 'ops'
+SCHEMA_NAME = "ops"
 
 """
     File statuses
@@ -32,11 +33,15 @@ class OpsStatusCreate(OpsStatusBase):
 class OpsStatusUpdate(OpsStatusBase):
     status_name: str
 
+
+
 """
     Ops files
 """
 
+
 class OpsFileBase(SQLModel):
+    op_type: Optional[str] = Field(default=None, max_length=100) # "maritime", "air", "road", "train"
     # Locations
     origin_location: Optional[str] = Field(default=None, max_length=100) # City or port/airport
     origin_country: Optional[str] = Field(default=None, max_length=100) # country code
@@ -73,15 +78,15 @@ class OpsFile(OpsFileBase, table=True):
     status_id: int = Field(foreign_key="ops.op_status.status_id")
     
     # Providers
-    agent_id: Optional[UUID] = Field(default=None, foreign_key="providers.international_agents.agent_id", sa_column_kwargs={"name": "international_agent_id"})
+    # agent_id: Optional[UUID] = Field(default=None, foreign_key="providers.international_agents.agent_id", sa_column_kwargs={"name": "international_agent_id"})
     carrier_id: Optional[UUID] = Field(default=None, foreign_key="providers.carriers.carrier_id", sa_column_kwargs={"name": "carrier_id"})
 
     # Relationships
     client: Client = Relationship(back_populates="ops_files")
     status: OpsStatus = Relationship(back_populates="ops_files") 
     carrier: Optional[Carrier] = Relationship(back_populates="ops_files") 
-    agent: Optional[InternationalAgent] = Relationship(back_populates="ops_files") 
-    
+    agents: Optional[List[InternationalAgent]] = Relationship(back_populates="ops_files", link_model=OpsFileInternationalAgentLink) 
+    comments: List["OpsFileComment"] = Relationship(back_populates="ops_file", cascade_delete=True)   
 
 class OpsFilePublic(OpsFileBase):
     op_id: UUID
@@ -91,7 +96,9 @@ class OpsFilePublic(OpsFileBase):
     
     # Providers
     carrier: Optional[CarrierPublic] = None
-    agent: Optional[InternationalAgentPublic] = None
+    agents: Optional[List[InternationalAgentPublic]] = []
+    
+    comments: Optional[List["OpsFileCommentPublic"]] = []
 
     # Others
     created_at: datetime = Field(default_factory=datetime.utcnow, nullable=False)
@@ -99,19 +106,53 @@ class OpsFilePublic(OpsFileBase):
 
 class OpsFileCreate(OpsFileBase):
     client_id: UUID
-
     status_id: int
+    op_type: Optional[Literal["maritime", "air", "road", "train"]] = None
     # Providers
     carrier_id: Optional[UUID] = None
-    agent_id: Optional[UUID] = None
+    agents_id: Optional[List[UUID]] = []
     # Cargo properties
     cargo_description: Optional[str] = None
 
 class OpsFileUpdate(OpsFileBase):
     client_id: Optional[UUID] = None
     status_id: Optional[int] = None
+    op_type: Optional[Literal["maritime", "air", "road", "train"]] = None
     # Providers
     carrier_id: Optional[UUID | None] = None
-    agent_id: Optional[UUID] | None = None
+    agents_id: Optional[List[UUID]] = []
     # Cargo properties
     cargo_description: Optional[str] = None
+
+
+"""
+    Ops file comemnts
+"""
+
+class OpsFileCommentBase(SQLModel):
+    author: Optional[str] = None
+    content: str
+
+class OpsFileComment(OpsFileCommentBase, table=True):
+    __tablename__ = "op_file_comments"
+    __table_args__ = {"schema": SCHEMA_NAME}     
+
+    comment_id: UUID = Field(default_factory=uuid4, primary_key=True, sa_column_kwargs={"name": "comment_id"})
+    
+    op_id: UUID = Field(foreign_key="ops.op_files.op_id")
+    
+    # Relationships
+    ops_file: OpsFile = Relationship(back_populates="comments") 
+
+class OpsFileCommentPublic(OpsFileCommentBase):
+    comment_id: UUID
+    op_id: UUID
+
+class OpsFileCommentCreate(OpsFileCommentBase):
+    op_id: UUID
+    author: Optional[str] = None
+    content: str
+
+class OpsFileCommentUpdate(OpsFileCommentBase):
+    author: Optional[str] = None
+    content: Optional[str] = None

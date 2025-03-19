@@ -51,7 +51,7 @@ def update_carrier(carrier_id: UUID, carrier: CarrierUpdate, db: SessionDep):
 def delete_carrier(carrier_id: UUID, db: SessionDep):
     carrier = db.get(Carrier, carrier_id)
     if not carrier:
-        raise HTTPException(status_code=404, details="Carrier not found")
+        raise HTTPException(status_code=404, detail="Carrier not found")
     db.delete(carrier)
     db.commit()
     return {"ok": True}

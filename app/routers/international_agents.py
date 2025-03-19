@@ -53,7 +53,7 @@ def update_international_agent(international_agent_id: UUID, international_agent
 def delete_international_agent(international_agent_id: UUID, db: SessionDep):
     international_agent = db.get(InternationalAgent, international_agent_id)
     if not international_agent:
-        raise HTTPException(status_code=404, details="International agent not found")
+        raise HTTPException(status_code=404, detail="International agent not found")
     db.delete(international_agent)
     db.commit()
     return {"ok": True}

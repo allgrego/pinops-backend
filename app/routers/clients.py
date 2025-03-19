@@ -49,7 +49,7 @@ def update_client(client_id: UUID, client: ClientUpdate, db: SessionDep):
 def delete_client(client_id: UUID, db: SessionDep):
     client = db.get(Client, client_id)
     if not client:
-        raise HTTPException(status_code=404, details="Client not found")
+        raise HTTPException(status_code=404, detail="Client not found")
     db.delete(client)
     db.commit()
     return {"ok": True} 
