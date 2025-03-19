@@ -1,8 +1,10 @@
 from fastapi import APIRouter, HTTPException
-from sqlmodel import select
+from sqlmodel import select, func
 from app.database import SessionDep
 from app.models.international_agents import InternationalAgent
 from app.models.ops_files import OpsStatus, OpsStatusPublic, OpsFile, OpsFilePublic, OpsFileCreate, OpsFileUpdate, OpsFileComment, OpsFileCommentPublic, OpsFileCommentCreate, OpsFileCommentUpdate
+from app.models.carriers import Carrier
+from app.models.clients import Client
 from uuid import UUID
 
 router = APIRouter(
@@ -154,3 +156,24 @@ def read_ops_status(status_id: int, db: SessionDep):
     if not ops_status:
         raise HTTPException(status_code=404, detail="Ops status not found")
     return ops_status
+
+"""
+    Stats
+
+    TODO: Move to other namespace
+"""
+
+
+@router.get("/general/statistics/") 
+def read_ops_statistics(db: SessionDep):
+    clients_count = db.exec(select(func.count(Client.client_id))).one() 
+    carriers_count = db.exec(select(func.count(Carrier.carrier_id))).one()
+    agents_count = db.exec(select(func.count(InternationalAgent.agent_id))).one()
+    ops_files_count = db.exec(select(func.count(OpsFile.op_id))).one()
+    
+    return {
+        "total_clients": clients_count,
+        "total_agents": agents_count,
+        "total_carriers": carriers_count,
+        "total_ops_files": ops_files_count,
+    }
