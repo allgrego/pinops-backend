@@ -42,7 +42,7 @@ app = FastAPI(title='OPS - API',
               swagger_ui_parameters={"docExpansion": "none"})
 
 # CORS config
-CORS_ALLOWED_ORIGIN = os.environ.get("ALLOWED_CORS_ORIGINS") # Must be comma-separated. e.g. "http://localhost:3000,https://localhost:3000"
+CORS_ALLOWED_ORIGIN = os.environ.get("ALLOWED_CORS_ORIGINS", "") # Must be comma-separated. e.g. "http://localhost:3000,https://localhost:3000"
 CORS_origins= CORS_ALLOWED_ORIGIN.split(",")
 app.add_middleware(
     CORSMiddleware,
