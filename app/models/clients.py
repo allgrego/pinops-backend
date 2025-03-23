@@ -1,9 +1,14 @@
+from datetime import datetime
 from sqlmodel import SQLModel, Field, Relationship
 from uuid import UUID, uuid4
-from typing import List
+from typing import List, Optional
 
 class ClientBase(SQLModel):
-    name: str = Field(default=None)
+    name: str = Field(default=None, unique=True)
+    tax_id: Optional[str] = Field(default=None, max_length=100, unique=True)
+    contact_name: Optional[str] = Field(default=None, max_length=255)
+    contact_phone: Optional[str] = Field(default=None, max_length=100)
+    contact_email: Optional[str] = Field(default=None, max_length=255)
 
 
 class Client(ClientBase, table=True):
@@ -17,8 +22,10 @@ class Client(ClientBase, table=True):
 class ClientPublic(ClientBase):
     client_id: UUID 
 
+    created_at: datetime = Field(default_factory=datetime.utcnow, nullable=False)
+
 class ClientCreate(ClientBase):
-    name: str
+    pass
 
 class ClientUpdate(ClientBase):
-    name: str
+    name: Optional[str] = None

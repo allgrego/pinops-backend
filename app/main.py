@@ -36,7 +36,7 @@ async def lifespan(app: FastAPI):
     app.state.some_resource = None
 
 
-app = FastAPI(title='OPS - API', 
+app = FastAPI(title='PinOps - API', 
               lifespan=lifespan,
               redoc_url=None, version="1.0.0", 
               swagger_ui_parameters={"docExpansion": "none"})

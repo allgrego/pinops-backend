@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import Optional, List
 from sqlmodel import SQLModel, Field, Relationship
 from uuid import UUID, uuid4
@@ -10,7 +11,11 @@ SCHEMA_NAME = 'providers'
 """
 
 class InternationalAgentBase(SQLModel):
-    name: str = Field(default=None)
+    name: str = Field(unique=True)
+    tax_id: Optional[str] = Field(default=None, max_length=100, unique=True)
+    contact_name: Optional[str] = Field(default=None, max_length=255)
+    contact_phone: Optional[str] = Field(default=None, max_length=100)
+    contact_email: Optional[str] = Field(default=None, max_length=255)
 
 class InternationalAgent(InternationalAgentBase, table=True):
     __tablename__ = "international_agents"
@@ -23,9 +28,11 @@ class InternationalAgent(InternationalAgentBase, table=True):
 class InternationalAgentPublic(InternationalAgentBase):
     agent_id: UUID
 
+    created_at: datetime = Field(default_factory=datetime.utcnow, nullable=False)
+
 class InternationalAgentCreate(InternationalAgentBase):
-    name: str
+    pass
 
 class InternationalAgentUpdate(InternationalAgentBase):
-    name: str
+    name: Optional[str] = None
 

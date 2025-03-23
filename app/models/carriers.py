@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import Literal, Optional, List
 from sqlmodel import SQLModel, Field, Relationship
 from uuid import UUID, uuid4
@@ -10,7 +11,10 @@ SCHEMA_NAME = 'providers'
 
 class CarrierBase(SQLModel):
     name: str = Field(default=None)
-    type: str
+    type: str = Field()
+    contact_name: Optional[str] = Field(default=None, max_length=255)
+    contact_phone: Optional[str] = Field(default=None, max_length=100)
+    contact_email: Optional[str] = Field(default=None, max_length=255)
 
 class Carrier(CarrierBase, table=True):
     __tablename__ = "carriers"
@@ -23,8 +27,9 @@ class Carrier(CarrierBase, table=True):
 class CarrierPublic(CarrierBase):
     carrier_id: UUID
 
+    created_at: datetime = Field(default_factory=datetime.utcnow, nullable=False)
+
 class CarrierCreate(CarrierBase):
-    name: str
     type: Literal["shipping_line", "airline"]
 
 class CarrierUpdate(CarrierBase):
