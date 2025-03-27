@@ -1,5 +1,5 @@
 from fastapi import APIRouter, HTTPException
-from sqlmodel import select
+from sqlmodel import select, desc
 from app.database import SessionDep
 from app.models.international_agents import InternationalAgent, InternationalAgentCreate, InternationalAgentPublic, InternationalAgentUpdate
 from uuid import UUID
@@ -25,7 +25,7 @@ def create_International_agent(international_agent: InternationalAgentCreate, db
 
 @router.get("/", response_model=list[InternationalAgentPublic]) 
 def read_international_agents(db: SessionDep):
-    international_agents = db.exec(select(InternationalAgent)).all()
+    international_agents = db.exec(select(InternationalAgent).order_by(desc(InternationalAgent.created_at))).all()
     return international_agents
 
 @router.get("/{international_agent_id}", response_model=InternationalAgentPublic)

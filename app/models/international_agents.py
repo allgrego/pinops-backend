@@ -23,6 +23,8 @@ class InternationalAgent(InternationalAgentBase, table=True):
 
     agent_id: UUID = Field(default_factory=uuid4, primary_key=True, sa_column_kwargs={"name": "agent_id"})
 
+    created_at: datetime = Field(default_factory=datetime.utcnow, nullable=False)
+
     ops_files: Optional[List["OpsFile"]] = Relationship(back_populates="agents", link_model=OpsFileInternationalAgentLink)
     
 class InternationalAgentPublic(InternationalAgentBase):
