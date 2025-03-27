@@ -17,7 +17,10 @@ class Client(ClientBase, table=True):
 
     client_id: UUID = Field(default_factory=uuid4, primary_key=True, sa_column_kwargs={"name": "client_id"})
 
+    created_at: datetime = Field(default_factory=datetime.utcnow, nullable=False)
+
     ops_files: List["OpsFile"] = Relationship(back_populates="client")
+
 
 class ClientPublic(ClientBase):
     client_id: UUID 

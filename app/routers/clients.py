@@ -1,5 +1,5 @@
-from fastapi import APIRouter, Depends, HTTPException
-from sqlmodel import select
+from fastapi import APIRouter,  HTTPException
+from sqlmodel import select, desc
 from app.database import get_db, SessionDep
 from app.models.clients import Client, ClientPublic, ClientCreate, ClientUpdate
 from uuid import UUID
@@ -21,7 +21,7 @@ def create_client(client: ClientCreate, db: SessionDep):
 
 @router.get("/", response_model=list[ClientPublic]) 
 def read_clients(db: SessionDep):
-    clients = db.exec(select(Client)).all()
+    clients = db.exec(select(Client).order_by(desc(Client.created_at))).all()
     return clients
 
 @router.get("/{client_id}", response_model=ClientPublic)
