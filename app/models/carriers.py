@@ -22,6 +22,8 @@ class Carrier(CarrierBase, table=True):
 
     carrier_id: UUID = Field(default_factory=uuid4, primary_key=True, sa_column_kwargs={"name": "carrier_id"})
 
+    created_at: datetime = Field(default_factory=datetime.utcnow, nullable=False)
+
     ops_files: Optional[List["OpsFile"]] = Relationship(back_populates="carrier")
 
 class CarrierPublic(CarrierBase):
@@ -30,9 +32,9 @@ class CarrierPublic(CarrierBase):
     created_at: datetime = Field(default_factory=datetime.utcnow, nullable=False)
 
 class CarrierCreate(CarrierBase):
-    type: Literal["shipping_line", "airline"]
+    type: Literal["shipping_line", "airline","road_freight_company", "railway_company"]
 
 class CarrierUpdate(CarrierBase):
     name: Optional[str] = None
-    type: Optional[Literal["shipping_line", "airline"]] = None
+    type: Optional[Literal["shipping_line", "airline", "road_freight_company", "railway_company"]] = None
 

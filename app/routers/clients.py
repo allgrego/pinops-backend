@@ -1,6 +1,6 @@
 from fastapi import APIRouter,  HTTPException
 from sqlmodel import select, desc
-from app.database import get_db, SessionDep
+from app.database import SessionDep
 from app.models.clients import Client, ClientPublic, ClientCreate, ClientUpdate
 from uuid import UUID
 

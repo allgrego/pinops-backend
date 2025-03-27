@@ -1,5 +1,5 @@
 from fastapi import APIRouter, HTTPException
-from sqlmodel import select
+from sqlmodel import select, desc
 from app.database import SessionDep
 from app.models.carriers import Carrier, CarrierCreate, CarrierPublic, CarrierUpdate
 from uuid import UUID
@@ -25,7 +25,7 @@ def create_carrier(carrier: CarrierCreate, db: SessionDep):
 
 @router.get("/", response_model=list[CarrierPublic]) 
 def read_carriers(db: SessionDep):
-    carriers = db.exec(select(Carrier)).all()
+    carriers = db.exec(select(Carrier).order_by(desc(Carrier.created_at))).all()
     return carriers
 
 @router.get("/{carrier_id}", response_model=CarrierPublic)
