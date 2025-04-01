@@ -1,8 +1,8 @@
 from fastapi import APIRouter, HTTPException
-from sqlmodel import select, func
+from sqlmodel import select, func, desc
 from app.database import SessionDep
 from app.models.international_agents import InternationalAgent
-from app.models.ops_files import OpsStatus, OpsStatusPublic, OpsFile, OpsFilePublic, OpsFileCreate, OpsFileUpdate, OpsFileComment, OpsFileCommentPublic, OpsFileCommentCreate, OpsFileCommentUpdate
+from app.models.ops_files import OpsStatus, OpsStatusPublic, OpsFile, OpsFilePublic, OpsFileCreate, OpsFileUpdate, OpsFileComment, OpsFileCommentPublic, OpsFileCommentCreate, OpsFileCommentUpdate, OpsFileCommentCreateWithoutOpId
 from app.models.carriers import Carrier
 from app.models.clients import Client
 from uuid import UUID
@@ -30,7 +30,14 @@ def create_ops_file(ops_file: OpsFileCreate, db: SessionDep):
             raise HTTPException(status_code=404, detail=f"Agent not found. ID: {agent_id}")
         
         db_ops_file.agents.append(db_agent)
-        
+
+    # Add comment if any
+    if ops_file.comment is not None: 
+        ops_file_id = db_ops_file.op_id
+        comment_data = OpsFileCommentCreateWithoutOpId.model_validate(ops_file.comment)
+        db_comment = OpsFileComment(author=comment_data.author, content=comment_data.content, op_id=ops_file_id)
+        db_ops_file.comments.append(db_comment)
+
     db.add(db_ops_file)
     db.commit()
     db.refresh(db_ops_file)
@@ -38,7 +45,7 @@ def create_ops_file(ops_file: OpsFileCreate, db: SessionDep):
 
 @router.get("/", response_model=list[OpsFilePublic]) 
 def read_ops_files(db: SessionDep):
-    ops_files = db.exec(select(OpsFile)).all()
+    ops_files = db.exec(select(OpsFile).order_by(desc(OpsFile.created_at))).all()
     return ops_files
 
 @router.get("/{ops_file_id}", response_model=OpsFilePublic) 

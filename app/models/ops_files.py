@@ -81,6 +81,9 @@ class OpsFile(OpsFileBase, table=True):
     # agent_id: Optional[UUID] = Field(default=None, foreign_key="providers.international_agents.agent_id", sa_column_kwargs={"name": "international_agent_id"})
     carrier_id: Optional[UUID] = Field(default=None, foreign_key="providers.carriers.carrier_id", sa_column_kwargs={"name": "carrier_id"})
 
+    created_at: datetime = Field(default_factory=datetime.utcnow, nullable=False)
+    updated_at: datetime = Field(default_factory=datetime.utcnow, nullable=False)
+    
     # Relationships
     client: Client = Relationship(back_populates="ops_files")
     status: OpsStatus = Relationship(back_populates="ops_files") 
@@ -113,6 +116,7 @@ class OpsFileCreate(OpsFileBase):
     agents_id: Optional[List[UUID]] = []
     # Cargo properties
     cargo_description: Optional[str] = None
+    comment: Optional["OpsFileCommentBase"] =  None # Only one comment could be added
 
 class OpsFileUpdate(OpsFileBase):
     client_id: Optional[UUID] = None
@@ -126,7 +130,7 @@ class OpsFileUpdate(OpsFileBase):
 
 
 """
-    Ops file comemnts
+    Ops file comments
 """
 
 class OpsFileCommentBase(SQLModel):
@@ -140,6 +144,8 @@ class OpsFileComment(OpsFileCommentBase, table=True):
     comment_id: UUID = Field(default_factory=uuid4, primary_key=True, sa_column_kwargs={"name": "comment_id"})
     
     op_id: UUID = Field(foreign_key="ops.op_files.op_id")
+
+    created_at: datetime = Field(default_factory=datetime.utcnow, nullable=False)
     
     # Relationships
     ops_file: OpsFile = Relationship(back_populates="comments") 
@@ -148,10 +154,14 @@ class OpsFileCommentPublic(OpsFileCommentBase):
     comment_id: UUID
     op_id: UUID
 
-class OpsFileCommentCreate(OpsFileCommentBase):
-    op_id: UUID
+    # Others
+    created_at: datetime = Field(default_factory=datetime.utcnow, nullable=False)
+
+class OpsFileCommentCreateWithoutOpId(OpsFileCommentBase):
     author: Optional[str] = None
     content: str
+class OpsFileCommentCreate(OpsFileCommentCreateWithoutOpId):
+    op_id: UUID
 
 class OpsFileCommentUpdate(OpsFileCommentBase):
     author: Optional[str] = None
