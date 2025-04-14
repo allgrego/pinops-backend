@@ -4,7 +4,7 @@ import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.routers import clients, international_agents, carriers, ops_files
+from app.routers import clients, international_agents, carriers, ops_files, geodata
 from app.database import create_db_and_tables
 from contextlib import asynccontextmanager
 
@@ -58,6 +58,7 @@ app.add_middleware(
 #     response = await call_next(request)
 #     return response
 
+app.include_router(geodata.router)
 app.include_router(clients.router)
 app.include_router(international_agents.router)
 app.include_router(carriers.router)
