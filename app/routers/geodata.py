@@ -27,8 +27,8 @@ def read_country(country_id: int, db: SessionDep):
 def read_country(iso_code: str, db: SessionDep):
     country = db.exec(select(Country)
                       .where(
-                          func.lower(Country.iso2_code) == iso_code.lower() 
-                          or func.lower(Country.iso3_code) == iso_code.lower()
+                          (func.lower(Country.iso2_code) == iso_code.lower() )
+                          | (func.lower(Country.iso3_code) == iso_code.lower())
                         )
                       ).first()
     if not country:
