@@ -4,11 +4,13 @@ from uuid import UUID, uuid4
 from typing import List, Optional
 
 class ClientBase(SQLModel):
-    name: str = Field(default=None, unique=True)
+    name: str = Field(default=None, unique=True, max_length=255)
     tax_id: Optional[str] = Field(default=None, max_length=100, unique=True)
+    address: Optional[str] = Field(default=None)
     contact_name: Optional[str] = Field(default=None, max_length=255)
     contact_phone: Optional[str] = Field(default=None, max_length=100)
     contact_email: Optional[str] = Field(default=None, max_length=255)
+    disabled: Optional[bool] = Field(default=False)
 
 
 class Client(ClientBase, table=True):
