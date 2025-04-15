@@ -79,7 +79,7 @@ class OpsFile(OpsFileBase, table=True):
     
     # Providers
     # agent_id: Optional[UUID] = Field(default=None, foreign_key="providers.international_agents.agent_id", sa_column_kwargs={"name": "international_agent_id"})
-    carrier_id: Optional[UUID] = Field(default=None, foreign_key="providers.carriers.carrier_id", sa_column_kwargs={"name": "carrier_id"})
+    carrier_id: Optional[UUID] = Field(default=None, foreign_key="carriers.carriers.carrier_id", sa_column_kwargs={"name": "carrier_id"})
 
     created_at: datetime = Field(default_factory=datetime.utcnow, nullable=False)
     updated_at: datetime = Field(default_factory=datetime.utcnow, nullable=False)
