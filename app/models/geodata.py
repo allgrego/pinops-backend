@@ -16,7 +16,7 @@ class Country(CountryBase, table=True):
     country_id: int = Field(primary_key=True)
      
     # Relationships
-
+    partners: List["Partner"] = Relationship(back_populates="country")
 
 class CountryPublic(CountryBase):
     country_id: int 
