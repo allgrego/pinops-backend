@@ -59,7 +59,6 @@ class User(UserBase, table=True):
     ops_files_comments: Optional[List["OpsFileComment"]] = Relationship(back_populates="author") 
 
 
-
 class UserPublic(UserBase):
     user_id: UUID
     role: Optional[UserRolePublic] = None
@@ -70,6 +69,7 @@ class UserCreate(UserBase):
 
 class UserUpdate(UserBase):
     name: Optional[str] = None
+    email: Optional[str] = None
     disabled: Optional[bool] = None
     password: Optional[str] = None
     role_id: Optional[str] = None

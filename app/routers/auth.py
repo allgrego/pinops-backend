@@ -12,7 +12,7 @@ router = APIRouter(
 )
 
 @router.post("/login", response_model=UserPublic)
-def create_user(user: UserLogin, db: SessionDep):
+def login(user: UserLogin, db: SessionDep):
     email = user.email.lower().strip()
 
     db_user = db.exec(select(User).where(func.lower(User.email) == email)).first()

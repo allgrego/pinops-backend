@@ -45,14 +45,15 @@ def read_user(user_id: UUID, db: SessionDep):
 
 
 @router.patch("/{user_id}/", response_model=UserPublic)
-def update_user(user_id: UUID, User: UserUpdate, db: SessionDep):
+def update_user(user_id: UUID, user: UserUpdate, db: SessionDep):
     user_db = db.get(User, user_id)
     if not user_db:
         raise HTTPException(status_code=404, detail="User not found")
-    user_data = User.model_dump(exclude_unset=True)
+    user_data = user.model_dump(exclude_unset=True)
     
     if "password" in user_data:
-        hashed_password = hash_password(user_data["password"])
+        salt = generate_salt()
+        hashed_password = hash_password(user_data["password"], salt)
         user_data["hashed_password"] = hashed_password
         del user_data["password"]
 
