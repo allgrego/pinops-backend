@@ -51,8 +51,13 @@ class User(UserBase, table=True):
     created_at: datetime = Field(default_factory=datetime.utcnow)
     
     hashed_password: str
-
+    
+    # Relationship
     role: Optional[UserRole] = Relationship(back_populates="users")
+    created_ops_files: Optional[List["OpsFile"]] = Relationship(back_populates="creator", sa_relationship_kwargs={"foreign_keys": "[OpsFile.creator_user_id]"})
+    assigned_ops_files: Optional[List["OpsFile"]] = Relationship(back_populates="assignee", sa_relationship_kwargs={"foreign_keys": "[OpsFile.assignee_user_id]"})
+    ops_files_comments: Optional[List["OpsFileComment"]] = Relationship(back_populates="author") 
+
 
 
 class UserPublic(UserBase):

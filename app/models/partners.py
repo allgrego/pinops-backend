@@ -1,8 +1,9 @@
 from datetime import datetime
-from typing import Literal, Optional, List
+from typing import Optional, List
 from sqlmodel import SQLModel, Field, Relationship
 from uuid import UUID, uuid4
 from app.models.geodata import Country
+from app.models.ops_files_partners import OpsFilePartnerLink
 
 SCHEMA_NAME = 'partners'
 
@@ -62,6 +63,7 @@ class Partner(PartnerBase, table=True):
     partner_type: PartnerType = Relationship(back_populates="partners")
     partner_contacts: List["PartnerContact"] = Relationship(back_populates="partner")
     country: Optional[Country] = Relationship(back_populates="partners")
+    ops_files: Optional[List["OpsFile"]] = Relationship(back_populates="partners", link_model=OpsFilePartnerLink) 
 
 class PartnerPublic(PartnerBase):
     partner_id: UUID

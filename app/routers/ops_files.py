@@ -1,8 +1,8 @@
 from fastapi import APIRouter, HTTPException
 from sqlmodel import select, func, desc
 from app.database import SessionDep
-from app.models.international_agents import InternationalAgent
-from app.models.ops_files import OpsStatus, OpsStatusPublic, OpsFile, OpsFilePublic, OpsFileCreate, OpsFileUpdate, OpsFileComment, OpsFileCommentPublic, OpsFileCommentCreate, OpsFileCommentUpdate, OpsFileCommentCreateWithoutOpId
+from app.models.partners import Partner
+from app.models.ops_files import OpsStatus, OpsStatusPublic, OpsFile, OpsFilePublic, OpsFileCreate, OpsFileUpdate, OpsFileComment, OpsFileCommentPublic, OpsFileCommentCreate, OpsFileCommentUpdate, OpsFileCommentCreateWithoutOpId, OpsFileCargoPackage, OpsFileCargoPackageCreateWithoutOpId
 from app.models.carriers import Carrier
 from app.models.clients import Client
 from uuid import UUID
@@ -23,17 +23,26 @@ router = APIRouter(
 def create_ops_file(ops_file: OpsFileCreate, db: SessionDep):
     db_ops_file = OpsFile.model_validate(ops_file)
     
-    # Add agents instances to Ops File instance
-    for agent_id in ops_file.agents_id:
-        db_agent = db.get(InternationalAgent, agent_id)
-        if not db_agent:
-            raise HTTPException(status_code=404, detail=f"Agent not found. ID: {agent_id}")
+    # Add partners instances to Ops File instance
+    for partner_id in ops_file.partners_id:
+        db_partner = db.get(Partner, partner_id)
+        if not db_partner:
+            raise HTTPException(status_code=404, detail=f"Partner not found. Invalid ID: {partner_id}")
         
-        db_ops_file.agents.append(db_agent)
+        db_ops_file.partners.append(db_partner)
+
+    ops_file_id = db_ops_file.op_id
+
+    # Add packaging instances to ops file instance
+    for package_data in ops_file.packaging:
+        packaging_data = OpsFileCargoPackageCreateWithoutOpId.model_validate(package_data)
+        # Create package instance
+        db_package = OpsFileCargoPackage(op_id=ops_file_id, quantity=packaging_data.quantity, units=packaging_data.units)
+        # Associate it with ops file
+        db_ops_file.packaging.append(db_package)
 
     # Add comment if any
     if ops_file.comment is not None: 
-        ops_file_id = db_ops_file.op_id
         comment_data = OpsFileCommentCreateWithoutOpId.model_validate(ops_file.comment)
         db_comment = OpsFileComment(author=comment_data.author, content=comment_data.content, op_id=ops_file_id)
         db_ops_file.comments.append(db_comment)
@@ -64,20 +73,36 @@ def update_ops_file(ops_file_id: UUID, ops_file: OpsFileUpdate, db: SessionDep):
     ops_file_data = ops_file.model_dump(exclude_unset=True)
     ops_file_db.sqlmodel_update(ops_file_data)
     
-    # Manage new agents list if provided
-    if ops_file_data.get('agents_id') is not None:
+    # Manage new partners list if provided
+    if ops_file_data.get('partners_id') is not None:
+        # Reset current partners list
+        ops_file_db.partners.clear()
         
-        # Reset current agents list
-        ops_file_db.agents.clear()
-        
-        # Iterate on new agents list and Add agents instances to Ops File instance
-        for agent_id in ops_file.agents_id:
-            db_agent = db.get(InternationalAgent, agent_id)
+        # Iterate on new partners list and Add partners instances to Ops File instance
+        for partner_id in ops_file.partners_id:
+            db_partner = db.get(Partner, partner_id)
              
-            if not db_agent:
-                raise HTTPException(status_code=404, detail=f"Agent not found for ID {agent_id}")
+            if not db_partner:
+                raise HTTPException(status_code=404, detail=f"Partner not found for ID {partner_id}")
         
-            ops_file_db.agents.append(db_agent)
+            ops_file_db.partners.append(db_partner)
+
+    # Manage new packaging list if provided
+    if ops_file_data.get('packaging') is not None:
+        # Reset current partners list
+        ops_file_db.packaging.clear()
+        
+        # Iterate on new partners list and Add partners instances to Ops File instance
+        for package_data in ops_file.packaging:
+            packaging_data = OpsFileCargoPackageCreateWithoutOpId.model_validate(package_data)
+            # Create package instance
+            db_package = OpsFileCargoPackage(
+                op_id=ops_file_id, 
+                quantity=packaging_data.quantity, 
+                units=packaging_data.units
+            )
+            # Associate it with ops file            
+            ops_file_db.packaging.append(db_package)
 
     db.add(ops_file_db)
     db.commit()
@@ -112,14 +137,14 @@ def create_ops_file_comment(comment: OpsFileCommentCreate, db: SessionDep):
     db.refresh(ops_file_db)
     return comment_db
 
-@router.get("/comments/{comment_id}", response_model=OpsFileCommentPublic)
+@router.get("/comments/{comment_id}/", response_model=OpsFileCommentPublic)
 def read_ops_file_comment(comment_id: UUID, db: SessionDep):
     comment_db = db.get(OpsFileComment, comment_id)
     if not comment_db:
         raise HTTPException(status_code=404, detail="Comment not found")   
     return comment_db
 
-@router.patch("/comments/{comment_id}", response_model=OpsFileCommentPublic) 
+@router.patch("/comments/{comment_id}/", response_model=OpsFileCommentPublic) 
 def update_ops_file_comment(comment_id: UUID, comment: OpsFileCommentUpdate, db: SessionDep):
 
     comment_db = db.get(OpsFileComment, comment_id)
@@ -136,7 +161,7 @@ def update_ops_file_comment(comment_id: UUID, comment: OpsFileCommentUpdate, db:
 
     return comment_db
 
-@router.delete("/comments/{comment_id}") 
+@router.delete("/comments/{comment_id}/") 
 def delete_ops_file_comment(comment_id: UUID, db: SessionDep):
     comment_db = db.get(OpsFileComment, comment_id)
 
@@ -157,7 +182,7 @@ def read_ops_statuses(db: SessionDep):
     ops_statuses = db.exec(select(OpsStatus)).all()
     return ops_statuses
 
-@router.get("/status/{status_id}", response_model=OpsStatusPublic) 
+@router.get("/status/{status_id}/", response_model=OpsStatusPublic) 
 def read_ops_status(status_id: int, db: SessionDep):
     ops_status = db.get(OpsStatus, status_id)
     if not ops_status:
@@ -175,12 +200,16 @@ def read_ops_status(status_id: int, db: SessionDep):
 def read_ops_statistics(db: SessionDep):
     clients_count = db.exec(select(func.count(Client.client_id))).one() 
     carriers_count = db.exec(select(func.count(Carrier.carrier_id))).one()
-    agents_count = db.exec(select(func.count(InternationalAgent.agent_id))).one()
+    partners_count = db.exec(select(func.count(Partner.partner_id))).one()
     ops_files_count = db.exec(select(func.count(OpsFile.op_id))).one()
+    closed_status_id = 0
+    closed_ops_files_count = db.exec(select(func.count(OpsFile.op_id)).where(OpsFile.status_id != closed_status_id)).one()
     
     return {
         "total_clients": clients_count,
-        "total_agents": agents_count,
+        "total_partners": partners_count,
         "total_carriers": carriers_count,
         "total_ops_files": ops_files_count,
+        "total_closed_ops_files": closed_ops_files_count,
+        "total_open_ops_files": ops_files_count - closed_ops_files_count
     }

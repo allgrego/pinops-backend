@@ -17,6 +17,8 @@ class Country(CountryBase, table=True):
      
     # Relationships
     partners: List["Partner"] = Relationship(back_populates="country")
+    ops_files_origins: Optional[List["OpsFile"]] = Relationship(back_populates="origin_country", sa_relationship_kwargs={"foreign_keys": "[OpsFile.origin_country_id]"})
+    ops_files_destinations: Optional[List["OpsFile"]] = Relationship(back_populates="destination_country", sa_relationship_kwargs={"foreign_keys": "[OpsFile.destination_country_id]"})
 
 class CountryPublic(CountryBase):
     country_id: int 

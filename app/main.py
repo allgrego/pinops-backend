@@ -4,7 +4,7 @@ import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.routers import clients, international_agents, carriers, ops_files, geodata, users, auth, partners
+from app.routers import clients, carriers, ops_files, geodata, users, auth, partners
 from app.database import create_db_and_tables
 from contextlib import asynccontextmanager
 
@@ -59,11 +59,10 @@ app.add_middleware(
 #     return response
 
 app.include_router(geodata.router)
-app.include_router(auth.router)
 app.include_router(users.router)
+app.include_router(auth.router)
 app.include_router(clients.router)
 app.include_router(partners.router)
-app.include_router(international_agents.router)
 app.include_router(carriers.router)
 app.include_router(ops_files.router)
 
