@@ -24,7 +24,7 @@ def read_clients(db: SessionDep):
     clients = db.exec(select(Client).order_by(desc(Client.created_at))).all()
     return clients
 
-@router.get("/{client_id}", response_model=ClientPublic)
+@router.get("/{client_id}/", response_model=ClientPublic)
 def read_client(client_id: UUID, db: SessionDep):
     client = db.get(Client, client_id)
     if not client:
@@ -32,7 +32,7 @@ def read_client(client_id: UUID, db: SessionDep):
     return client
 
 
-@router.patch("/{client_id}", response_model=ClientPublic)
+@router.patch("/{client_id}/", response_model=ClientPublic)
 def update_client(client_id: UUID, client: ClientUpdate, db: SessionDep):
     client_db = db.get(Client, client_id)
     if not client_db:
@@ -45,7 +45,7 @@ def update_client(client_id: UUID, client: ClientUpdate, db: SessionDep):
     return client_db
 
 
-@router.delete("/{client_id}")
+@router.delete("/{client_id}/")
 def delete_client(client_id: UUID, db: SessionDep):
     client = db.get(Client, client_id)
     if not client:
