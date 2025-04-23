@@ -35,6 +35,14 @@ def read_partner_type(partner_type_id: str, db: SessionDep):
 @router.post("/", response_model=PartnerPublic)
 def create_partner(partner: PartnerCreate, db: SessionDep):
     db_partner = Partner.model_validate(partner)
+
+    partner_id = db_partner.partner_id
+    # Iterate on each contact data
+    for contact in partner.contacts:
+        # New contact instance
+        db_contact = PartnerContact(partner_id=partner_id,name=contact.name, position=contact.position, email=contact.email, phone=contact.phone, mobile=contact.mobile)
+        db_partner.partner_contacts.append(db_contact)
+
     db.add(db_partner)
     db.commit()
     db.refresh(db_partner)

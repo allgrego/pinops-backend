@@ -2,7 +2,7 @@ from datetime import datetime
 from typing import Optional, List
 from sqlmodel import SQLModel, Field, Relationship
 from uuid import UUID, uuid4
-from app.models.geodata import Country
+from app.models.geodata import Country, CountryPublic
 from app.models.ops_files_partners import OpsFilePartnerLink
 
 SCHEMA_NAME = 'partners'
@@ -54,7 +54,7 @@ class Partner(PartnerBase, table=True):
 
     # Foreign keys
     partner_type_id: str = Field(foreign_key=f"{SCHEMA_NAME}.partner_types.partner_type_id", nullable=False)
-    country_id: int = Field(foreign_key=f"geodata.countries.country_id", default=None)
+    country_id: Optional[int] = Field(foreign_key=f"geodata.countries.country_id", default=None)
 
     created_at: datetime = Field(default_factory=datetime.utcnow, nullable=False)
     updated_at: datetime = Field(default_factory=datetime.utcnow, nullable=False)
@@ -72,11 +72,14 @@ class PartnerPublic(PartnerBase):
     updated_at: datetime 
 
     partner_type: PartnerType
-    country: Optional[Country] = None
+    country: Optional[CountryPublic] = None
+
+    partner_contacts:Optional[List["PartnerContactPublic"]] = []
 
 class PartnerCreate(PartnerBase):
     partner_type_id: str
-    country_id: int
+    country_id: Optional[int] = None
+    contacts: Optional[List["PartnerContactCreateBase"]] = []
 
 class PartnerUpdate(PartnerBase):
     name: Optional[str] = None
@@ -118,14 +121,16 @@ class PartnerContactPublic(PartnerContactBase):
     created_at: datetime 
     updated_at: datetime
 
-class PartnerContactCreate(PartnerContactBase):
-    partner_id: str
+class PartnerContactCreateBase(PartnerContactBase):
     name: str
     position: Optional[str] = None
     email: Optional[str] = None
     mobile: Optional[str] = None
     phone: Optional[str] = None
     disabled: Optional[bool] = False
+
+class PartnerContactCreate(PartnerContactCreateBase):
+    partner_id: str
 
 class PartnerContactUpdate(PartnerContactBase):
     partner_id: Optional[str] = None

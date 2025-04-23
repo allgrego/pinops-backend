@@ -66,7 +66,7 @@ class CarrierPublic(CarrierBase):
     created_at: datetime 
     updated_at: datetime 
 
-    carrier_type: CarrierType
+    carrier_type: CarrierTypePublic
 
 class CarrierCreate(CarrierBase):
     carrier_type_id: str
