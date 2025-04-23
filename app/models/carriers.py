@@ -68,12 +68,16 @@ class CarrierPublic(CarrierBase):
 
     carrier_type: CarrierTypePublic
 
+    carrier_contacts:Optional[List["CarrierContactPublic"]] = []
+
 class CarrierCreate(CarrierBase):
     carrier_type_id: str
+    initial_contacts: Optional[List["CarrierContactCreateBase"]] = []
 
 class CarrierUpdate(CarrierBase):
     name: Optional[str] = None
     carrier_type_id: Optional[str] = None
+    carrier_contacts: Optional[List["CarrierContactCreateBase"]] = None
 
 
 """
@@ -110,14 +114,16 @@ class CarrierContactPublic(CarrierContactBase):
     created_at: datetime 
     updated_at: datetime
 
-class CarrierContactCreate(CarrierContactBase):
-    carrier_id: str
+class CarrierContactCreateBase(CarrierContactBase):
     name: str
     position: Optional[str] = None
     email: Optional[str] = None
     mobile: Optional[str] = None
     phone: Optional[str] = None
     disabled: Optional[bool] = False
+
+class CarrierContactCreate(CarrierContactCreateBase):
+    carrier_id: str
 
 class CarrierContactUpdate(CarrierContactBase):
     carrier_id: Optional[str] = None

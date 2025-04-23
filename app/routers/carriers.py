@@ -1,7 +1,7 @@
 from fastapi import APIRouter,  HTTPException
 from sqlmodel import select, desc
 from app.database import SessionDep
-from app.models.carriers import CarrierTypePublic, CarrierType, Carrier, CarrierPublic, CarrierCreate, CarrierUpdate, CarrierContact  , CarrierContactCreate, CarrierContactPublic, CarrierContactUpdate
+from app.models.carriers import CarrierTypePublic, CarrierType, Carrier, CarrierPublic, CarrierCreate, CarrierUpdate, CarrierContact  , CarrierContactCreate, CarrierContactPublic, CarrierContactUpdate, CarrierContactCreateBase
 from uuid import UUID
 from typing import List
 
@@ -35,6 +35,20 @@ def read_carrier_type(carrier_type_id: str, db: SessionDep):
 @router.post("/", response_model=CarrierPublic)
 def create_carrier(carrier: CarrierCreate, db: SessionDep):
     db_carrier = Carrier.model_validate(carrier)
+    # Obtained generated carrier ID
+    carrier_id = db_carrier.carrier_id
+    # Iterate on each contact data
+    for contact_data in carrier.initial_contacts:
+        # New contact instance
+        db_contact = CarrierContact(
+            carrier_id=carrier_id,
+            name=contact_data.name, 
+            position=contact_data.position, 
+            email=contact_data.email, 
+            phone=contact_data.phone, 
+            mobile=contact_data.mobile,
+        )
+        db_carrier.carrier_contacts.append(db_contact)
     db.add(db_carrier)
     db.commit()
     db.refresh(db_carrier)
@@ -60,6 +74,26 @@ def update_carrier(carrier_id: UUID, carrier: CarrierUpdate, db: SessionDep):
         raise HTTPException(status_code=404, detail="Carrier not found")
     carrier_data = carrier.model_dump(exclude_unset=True)
     carrier_db.sqlmodel_update(carrier_data)
+    
+    provided_contacts = carrier_data.get('carrier_contacts')
+    # Manage new contacts list if provided
+    if provided_contacts is not None:
+        # Reset current contacts list
+        carrier_db.carrier_contacts.clear()
+        
+        # Iterate on new contacts list and Add contacts instances to carrier instance
+        for contact_obtained_data in provided_contacts:
+            contact_data = CarrierContactCreateBase.model_validate(contact_obtained_data)
+            # New contact instance
+            db_contact = CarrierContact(
+                carrier_id=carrier_id,
+                name=contact_data.name, 
+                position=contact_data.position, 
+                email=contact_data.email, 
+                phone=contact_data.phone, 
+                mobile=contact_data.mobile,
+            )
+            carrier_db.carrier_contacts.append(db_contact)
     db.add(carrier_db)
     db.commit()
     db.refresh(carrier_db)
