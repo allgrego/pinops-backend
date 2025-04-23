@@ -79,12 +79,13 @@ class PartnerPublic(PartnerBase):
 class PartnerCreate(PartnerBase):
     partner_type_id: str
     country_id: Optional[int] = None
-    contacts: Optional[List["PartnerContactCreateBase"]] = []
+    initial_contacts: Optional[List["PartnerContactCreateBase"]] = []
 
 class PartnerUpdate(PartnerBase):
     name: Optional[str] = None
     partner_type_id: Optional[str] = None
     country_id: Optional[int] = None
+    partner_contacts: Optional[List["PartnerContactCreateBase"]] = None
 
 
 """

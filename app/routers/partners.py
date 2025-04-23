@@ -1,7 +1,7 @@
 from fastapi import APIRouter,  HTTPException
 from sqlmodel import select, desc
 from app.database import SessionDep
-from app.models.partners import PartnerTypePublic, PartnerType, Partner, PartnerPublic, PartnerCreate, PartnerUpdate, PartnerContact, PartnerContactCreate, PartnerContactPublic, PartnerContactUpdate
+from app.models.partners import PartnerTypePublic, PartnerType, Partner, PartnerPublic, PartnerCreate, PartnerUpdate, PartnerContact, PartnerContactCreate, PartnerContactPublic, PartnerContactUpdate, PartnerContactCreateBase
 from uuid import UUID
 from typing import List
 
@@ -35,12 +35,19 @@ def read_partner_type(partner_type_id: str, db: SessionDep):
 @router.post("/", response_model=PartnerPublic)
 def create_partner(partner: PartnerCreate, db: SessionDep):
     db_partner = Partner.model_validate(partner)
-
+    # Obtaine generated partner ID
     partner_id = db_partner.partner_id
     # Iterate on each contact data
-    for contact in partner.contacts:
+    for contact_data in partner.initial_contacts:
         # New contact instance
-        db_contact = PartnerContact(partner_id=partner_id,name=contact.name, position=contact.position, email=contact.email, phone=contact.phone, mobile=contact.mobile)
+        db_contact = PartnerContact(
+            partner_id=partner_id,
+            name=contact_data.name, 
+            position=contact_data.position, 
+            email=contact_data.email, 
+            phone=contact_data.phone, 
+            mobile=contact_data.mobile,
+        )
         db_partner.partner_contacts.append(db_contact)
 
     db.add(db_partner)
@@ -67,7 +74,30 @@ def update_partner(partner_id: UUID, partner: PartnerUpdate, db: SessionDep):
     if not partner_db:
         raise HTTPException(status_code=404, detail="partner not found")
     partner_data = partner.model_dump(exclude_unset=True)
+
     partner_db.sqlmodel_update(partner_data)
+
+    provided_contacts = partner_data.get('partner_contacts')
+
+    # Manage new contacts list if provided
+    if provided_contacts is not None:
+        # Reset current contacts list
+        partner_db.partner_contacts.clear()
+        
+        # Iterate on new contacts list and Add contacts instances to partner instance
+        for contact_obtained_data in provided_contacts:
+            contact_data = PartnerContactCreateBase.model_validate(contact_obtained_data)
+            # New contact instance
+            db_contact = PartnerContact(
+                partner_id=partner_id,
+                name=contact_data.name, 
+                position=contact_data.position, 
+                email=contact_data.email, 
+                phone=contact_data.phone, 
+                mobile=contact_data.mobile,
+            )
+            partner_db.partner_contacts.append(db_contact)
+
     db.add(partner_db)
     db.commit()
     db.refresh(partner_db)
