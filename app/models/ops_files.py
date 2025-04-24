@@ -46,9 +46,9 @@ class OpsFileBase(SQLModel):
     op_type: Optional[str] = Field(default=None, max_length=100) # "maritime", "air", "road", "train", "other"
     # Locations
     origin_location: Optional[str] = Field(default=None, max_length=100) # City or port/airport
-    # origin_country: Optional[str] = Field(default=None, max_length=100) # country code
+    # origin country is FK
     destination_location: Optional[str] = Field(default=None, max_length=100) # City or port/airport
-    # destination_country: Optional[str] = Field(default=None, max_length=100) # country code
+    # destination country is FK
     # Schedules
     estimated_time_departure: Optional[date] = Field(default=None) # ETD
     actual_time_departure: Optional[date] = Field(default=None) #ATD
