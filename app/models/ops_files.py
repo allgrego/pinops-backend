@@ -137,7 +137,7 @@ class OpsFileCreate(OpsFileBase):
     assignee_user_id: Optional[UUID] = None
     # Other properties
     comment: Optional["OpsFileCommentBase"] =  None # Only one comment could be added when creating
-    packaging: Optional[List["OpsFileCargoPackageCreateWithoutOpId"]] = []
+    packaging_data: Optional[List["OpsFileCargoPackageCreateWithoutOpId"]] = []
 
 class OpsFileUpdate(OpsFileBase):
     client_id: Optional[UUID] = None
@@ -154,7 +154,7 @@ class OpsFileUpdate(OpsFileBase):
     creator_user_id: Optional[UUID] = None
     assignee_user_id: Optional[UUID] = None
     # Other properties
-    packaging: Optional[List["OpsFileCargoPackageCreateWithoutOpId"]] = None
+    packaging_data: Optional[List["OpsFileCargoPackageCreateWithoutOpId"]] = None
 
 """
     Ops file cargo packages

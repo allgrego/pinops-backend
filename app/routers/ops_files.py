@@ -35,7 +35,7 @@ def create_ops_file(ops_file: OpsFileCreate, db: SessionDep):
     creator_user_id = db_ops_file.creator_user_id
 
     # Add packaging instances to ops file instance
-    for package_data in ops_file.packaging:
+    for package_data in ops_file.packaging_data:
         packaging_data = OpsFileCargoPackageCreateWithoutOpId.model_validate(package_data)
         # Create package instance
         db_package = OpsFileCargoPackage(op_id=ops_file_id, quantity=packaging_data.quantity, units=packaging_data.units)
@@ -89,12 +89,12 @@ def update_ops_file(ops_file_id: UUID, ops_file: OpsFileUpdate, db: SessionDep):
             ops_file_db.partners.append(db_partner)
 
     # Manage new packaging list if provided
-    if ops_file_data.get('packaging') is not None:
+    if ops_file_data.get('packaging_data') is not None:
         # Reset current partners list
         ops_file_db.packaging.clear()
         
         # Iterate on new partners list and Add partners instances to Ops File instance
-        for package_data in ops_file.packaging:
+        for package_data in ops_file.packaging_data:
             packaging_data = OpsFileCargoPackageCreateWithoutOpId.model_validate(package_data)
             # Create package instance
             db_package = OpsFileCargoPackage(
