@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException
 from sqlmodel import select, func, desc
 from app.database import SessionDep
 from app.models.partners import Partner
-from app.models.ops_files import OpsStatus, OpsStatusPublic, OpsFile, OpsFilePublic, OpsFileCreate, OpsFileUpdate, OpsFileComment, OpsFileCommentPublic, OpsFileCommentCreate, OpsFileCommentUpdate, OpsFileCommentCreateWithoutOpId, OpsFileCargoPackage, OpsFileCargoPackageCreateWithoutOpId
+from app.models.ops_files import OpsStatus, OpsStatusPublic, OpsFile, OpsFilePublic, OpsFileCreate, OpsFileUpdate, OpsFileComment, OpsFileCommentPublic, OpsFileCommentCreate, OpsFileCommentUpdate, OpsFileCargoPackage, OpsFileCargoPackageCreateWithoutOpId, OpsFileCommentBase
 from app.models.carriers import Carrier
 from app.models.clients import Client
 from uuid import UUID
@@ -32,6 +32,7 @@ def create_ops_file(ops_file: OpsFileCreate, db: SessionDep):
         db_ops_file.partners.append(db_partner)
 
     ops_file_id = db_ops_file.op_id
+    creator_user_id = db_ops_file.creator_user_id
 
     # Add packaging instances to ops file instance
     for package_data in ops_file.packaging:
@@ -41,10 +42,10 @@ def create_ops_file(ops_file: OpsFileCreate, db: SessionDep):
         # Associate it with ops file
         db_ops_file.packaging.append(db_package)
 
-    # Add comment if any
+    # Add comment if any (the creator is the author)
     if ops_file.comment is not None: 
-        comment_data = OpsFileCommentCreateWithoutOpId.model_validate(ops_file.comment)
-        db_comment = OpsFileComment(author=comment_data.author, content=comment_data.content, op_id=ops_file_id)
+        comment_data = OpsFileCommentBase.model_validate(ops_file.comment)
+        db_comment = OpsFileComment(author_user_id=creator_user_id, content=comment_data.content, op_id=ops_file_id)
         db_ops_file.comments.append(db_comment)
 
     db.add(db_ops_file)
