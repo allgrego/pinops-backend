@@ -11,4 +11,4 @@ COPY ./app /code/app
 
 EXPOSE 8200 
 
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8200"]
+CMD ["uvicorn", "app.main:app", "--proxy-headers", "--forwarded-allow-ips=\"*\"", "--host", "0.0.0.0", "--port", "8200"]
