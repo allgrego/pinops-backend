@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException
 from sqlmodel import select, func, desc
 from app.database import SessionDep
 from app.models.partners import Partner
-from app.models.ops_files import OpsStatus, OpsStatusPublic, OpsFile, OpsFilePublic, OpsFileCreate, OpsFileUpdate, OpsFileComment, OpsFileCommentPublic, OpsFileCommentCreate, OpsFileCommentUpdate, OpsFileCommentCreateWithoutOpId, OpsFileCargoPackage, OpsFileCargoPackageCreateWithoutOpId
+from app.models.ops_files import OpsStatus, OpsStatusPublic, OpsFile, OpsFilePublic, OpsFileCreate, OpsFileUpdate, OpsFileComment, OpsFileCommentPublic, OpsFileCommentCreate, OpsFileCommentUpdate, OpsFileCargoPackage, OpsFileCargoPackageCreateWithoutOpId, OpsFileCommentBase
 from app.models.carriers import Carrier
 from app.models.clients import Client
 from uuid import UUID
@@ -32,19 +32,20 @@ def create_ops_file(ops_file: OpsFileCreate, db: SessionDep):
         db_ops_file.partners.append(db_partner)
 
     ops_file_id = db_ops_file.op_id
+    creator_user_id = db_ops_file.creator_user_id
 
     # Add packaging instances to ops file instance
-    for package_data in ops_file.packaging:
+    for package_data in ops_file.packaging_data:
         packaging_data = OpsFileCargoPackageCreateWithoutOpId.model_validate(package_data)
         # Create package instance
         db_package = OpsFileCargoPackage(op_id=ops_file_id, quantity=packaging_data.quantity, units=packaging_data.units)
         # Associate it with ops file
         db_ops_file.packaging.append(db_package)
 
-    # Add comment if any
+    # Add comment if any (the creator is the author)
     if ops_file.comment is not None: 
-        comment_data = OpsFileCommentCreateWithoutOpId.model_validate(ops_file.comment)
-        db_comment = OpsFileComment(author=comment_data.author, content=comment_data.content, op_id=ops_file_id)
+        comment_data = OpsFileCommentBase.model_validate(ops_file.comment)
+        db_comment = OpsFileComment(author_user_id=creator_user_id, content=comment_data.content, op_id=ops_file_id)
         db_ops_file.comments.append(db_comment)
 
     db.add(db_ops_file)
@@ -57,7 +58,7 @@ def read_ops_files(db: SessionDep):
     ops_files = db.exec(select(OpsFile).order_by(desc(OpsFile.created_at))).all()
     return ops_files
 
-@router.get("/{ops_file_id}", response_model=OpsFilePublic) 
+@router.get("/{ops_file_id}/", response_model=OpsFilePublic) 
 def read_ops_file(ops_file_id: UUID, db: SessionDep):
     ops_file_db = db.get(OpsFile, ops_file_id)
     if not ops_file_db:
@@ -65,7 +66,7 @@ def read_ops_file(ops_file_id: UUID, db: SessionDep):
 
     return ops_file_db
 
-@router.patch("/{ops_file_id}", response_model=OpsFilePublic)
+@router.patch("/{ops_file_id}/", response_model=OpsFilePublic)
 def update_ops_file(ops_file_id: UUID, ops_file: OpsFileUpdate, db: SessionDep):
     ops_file_db = db.get(OpsFile, ops_file_id)
     if not ops_file_db:
@@ -88,12 +89,12 @@ def update_ops_file(ops_file_id: UUID, ops_file: OpsFileUpdate, db: SessionDep):
             ops_file_db.partners.append(db_partner)
 
     # Manage new packaging list if provided
-    if ops_file_data.get('packaging') is not None:
+    if ops_file_data.get('packaging_data') is not None:
         # Reset current partners list
         ops_file_db.packaging.clear()
         
         # Iterate on new partners list and Add partners instances to Ops File instance
-        for package_data in ops_file.packaging:
+        for package_data in ops_file.packaging_data:
             packaging_data = OpsFileCargoPackageCreateWithoutOpId.model_validate(package_data)
             # Create package instance
             db_package = OpsFileCargoPackage(
@@ -109,7 +110,7 @@ def update_ops_file(ops_file_id: UUID, ops_file: OpsFileUpdate, db: SessionDep):
     db.refresh(ops_file_db)
     return ops_file_db
 
-@router.delete("/{ops_file_id}")
+@router.delete("/{ops_file_id}/")
 def delete_ops_file(ops_file_id: UUID, db: SessionDep):
     ops_file = db.get(OpsFile, ops_file_id)
     if not ops_file:

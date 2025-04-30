@@ -46,9 +46,9 @@ class OpsFileBase(SQLModel):
     op_type: Optional[str] = Field(default=None, max_length=100) # "maritime", "air", "road", "train", "other"
     # Locations
     origin_location: Optional[str] = Field(default=None, max_length=100) # City or port/airport
-    # origin_country: Optional[str] = Field(default=None, max_length=100) # country code
+    # origin country is FK
     destination_location: Optional[str] = Field(default=None, max_length=100) # City or port/airport
-    # destination_country: Optional[str] = Field(default=None, max_length=100) # country code
+    # destination country is FK
     # Schedules
     estimated_time_departure: Optional[date] = Field(default=None) # ETD
     actual_time_departure: Optional[date] = Field(default=None) #ATD
@@ -137,7 +137,7 @@ class OpsFileCreate(OpsFileBase):
     assignee_user_id: Optional[UUID] = None
     # Other properties
     comment: Optional["OpsFileCommentBase"] =  None # Only one comment could be added when creating
-    packaging: Optional[List["OpsFileCargoPackageCreateWithoutOpId"]] = []
+    packaging_data: Optional[List["OpsFileCargoPackageCreateWithoutOpId"]] = []
 
 class OpsFileUpdate(OpsFileBase):
     client_id: Optional[UUID] = None
@@ -154,7 +154,7 @@ class OpsFileUpdate(OpsFileBase):
     creator_user_id: Optional[UUID] = None
     assignee_user_id: Optional[UUID] = None
     # Other properties
-    packaging: Optional[List["OpsFileCargoPackageCreateWithoutOpId"]] = None
+    packaging_data: Optional[List["OpsFileCargoPackageCreateWithoutOpId"]] = None
 
 """
     Ops file cargo packages
