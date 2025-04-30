@@ -58,7 +58,7 @@ def read_ops_files(db: SessionDep):
     ops_files = db.exec(select(OpsFile).order_by(desc(OpsFile.created_at))).all()
     return ops_files
 
-@router.get("/{ops_file_id}", response_model=OpsFilePublic) 
+@router.get("/{ops_file_id}/", response_model=OpsFilePublic) 
 def read_ops_file(ops_file_id: UUID, db: SessionDep):
     ops_file_db = db.get(OpsFile, ops_file_id)
     if not ops_file_db:
@@ -66,7 +66,7 @@ def read_ops_file(ops_file_id: UUID, db: SessionDep):
 
     return ops_file_db
 
-@router.patch("/{ops_file_id}", response_model=OpsFilePublic)
+@router.patch("/{ops_file_id}/", response_model=OpsFilePublic)
 def update_ops_file(ops_file_id: UUID, ops_file: OpsFileUpdate, db: SessionDep):
     ops_file_db = db.get(OpsFile, ops_file_id)
     if not ops_file_db:
@@ -110,7 +110,7 @@ def update_ops_file(ops_file_id: UUID, ops_file: OpsFileUpdate, db: SessionDep):
     db.refresh(ops_file_db)
     return ops_file_db
 
-@router.delete("/{ops_file_id}")
+@router.delete("/{ops_file_id}/")
 def delete_ops_file(ops_file_id: UUID, db: SessionDep):
     ops_file = db.get(OpsFile, ops_file_id)
     if not ops_file:
