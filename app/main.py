@@ -1,7 +1,7 @@
 from typing import Union
 import os
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.routers import clients, carriers, ops_files, geodata, users, auth, partners
@@ -73,3 +73,7 @@ def read_root():
 @app.get("/items/{item_id}")
 def read_item(item_id: int, q: Union[str, None] = None):
     return {"item_id": item_id, "q": q}
+
+@app.get("/headers/")
+async def read_headers(request: Request):
+    return {"headers": request.headers}
