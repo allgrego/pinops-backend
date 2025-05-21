@@ -1,5 +1,6 @@
 from fastapi import APIRouter,  HTTPException
 from sqlmodel import select, desc
+from sqlalchemy.orm import selectinload
 from app.database import SessionDep
 from app.models.carriers import CarrierTypePublic, CarrierType, Carrier, CarrierPublic, CarrierCreate, CarrierUpdate, CarrierContact  , CarrierContactCreate, CarrierContactPublic, CarrierContactUpdate, CarrierContactCreateBase
 from uuid import UUID
@@ -69,9 +70,16 @@ def read_carrier(carrier_id: UUID, db: SessionDep):
 
 @router.patch("/{carrier_id}/", response_model=CarrierPublic)
 def update_carrier(carrier_id: UUID, carrier: CarrierUpdate, db: SessionDep):
-    carrier_db = db.get(Carrier, carrier_id)
+    # Eagerly load carrier_contacts to ensure they are available for manipulation
+    # This prevents N+1 queries and ensures the relationship is loaded before modifications.
+    carrier_db = db.exec(
+        select(Carrier).options(selectinload(Carrier.carrier_contacts))
+        .where(Carrier.carrier_id == carrier_id)
+    ).first()
+
     if not carrier_db:
         raise HTTPException(status_code=404, detail="Carrier not found")
+
     carrier_data = carrier.model_dump(exclude_unset=True)
     carrier_db.sqlmodel_update(carrier_data)
     
@@ -94,6 +102,19 @@ def update_carrier(carrier_id: UUID, carrier: CarrierUpdate, db: SessionDep):
                 mobile=contact_data.mobile,
             )
             carrier_db.carrier_contacts.append(db_contact)
+    # Hackaround: the previous code leaves orphan contacts in DB. Therefore it is required to remove them
+    
+    # Query for all orphan contacts
+    statement = select(CarrierContact).where(CarrierContact.carrier_id == None)
+    orphan_contacts = db.exec(statement).all()
+
+    if not orphan_contacts:
+        orphan_contacts=[]
+
+    # Delete each orphan contact found
+    for contact in orphan_contacts:
+        db.delete(contact)
+
     db.add(carrier_db)
     db.commit()
     db.refresh(carrier_db)
