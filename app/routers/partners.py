@@ -1,5 +1,6 @@
 from fastapi import APIRouter,  HTTPException
 from sqlmodel import select, desc
+from sqlalchemy.orm import selectinload
 from app.database import SessionDep
 from app.models.partners import PartnerTypePublic, PartnerType, Partner, PartnerPublic, PartnerCreate, PartnerUpdate, PartnerContact, PartnerContactCreate, PartnerContactPublic, PartnerContactUpdate, PartnerContactCreateBase
 from uuid import UUID
@@ -70,6 +71,14 @@ def read_partner(partner_id: UUID, db: SessionDep):
 @router.patch("/{partner_id}/", response_model=PartnerPublic)
 def update_partner(partner_id: UUID, partner: PartnerUpdate, db: SessionDep):
     partner_db = db.get(Partner, partner_id)
+
+    # Eagerly load carrier_contacts to ensure they are available for manipulation
+    # This prevents N+1 queries and ensures the relationship is loaded before modifications.
+    partner_db = db.exec(
+        select(Partner).options(selectinload(Partner.partner_contacts))
+        .where(Partner.partner_id == partner_id)
+    ).first()
+
     if not partner_db:
         raise HTTPException(status_code=404, detail="partner not found")
     partner_data = partner.model_dump(exclude_unset=True)
@@ -96,6 +105,19 @@ def update_partner(partner_id: UUID, partner: PartnerUpdate, db: SessionDep):
                 mobile=contact_data.mobile,
             )
             partner_db.partner_contacts.append(db_contact)
+
+    # Hackaround: the previous code leaves orphan contacts in DB. Therefore it is required to remove them
+
+    # Query for all orphan contacts
+    statement = select(PartnerContact).where(PartnerContact.partner_id == None)
+    orphan_contacts = db.exec(statement).all()
+
+    if not orphan_contacts:
+        orphan_contacts=[]
+
+    # Delete each orphan contact found
+    for contact in orphan_contacts:
+        db.delete(contact)
 
     db.add(partner_db)
     db.commit()
